@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Penginputan BBM</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+      .container {
+        width: 100%;
+        max-width: 600px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        padding: 30px;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .logo {
+        width: 100px;
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+      }
+      .form-group label {
+        font-weight: bold;
+        display: block;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        background-color: #6e47ee;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+      }
+      .hidden {
+        display: none;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 18px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+      th {
+        background-color: #007bff;
+        color: white;
+      }
+      .delete-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      .total {
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Login Form -->
+    <div class="container" id="loginContainer">
+      <img src="img/channels4_profile.jpg" alt="Logo" class="logo" />
+      <h2>Login</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="role">Masuk sebagai:</label>
+          <select id="role" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="name">Nama:</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-group hidden" id="passwordField">
+          <label for="password">Kata Sandi:</label>
+          <input type="password" id="password" />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+
+    <!-- BBM Input Form -->
+    <div class="container hidden" id="bbmContainer">
+      <h2>Form Penginputan BBM</h2>
+      <form id="bbmForm">
+        <div class="form-group">
+          <label for="tanggal">Tanggal:</label>
+          <input type="date" id="tanggal" required />
+        </div>
+        <div class="form-group">
+          <label for="pemakaian">Pemakaian BBM (Liter):</label>
+          <input type="number" id="pemakaian" required />
+        </div>
+        <div class="form-group">
+          <label for="jenis">Jenis BBM:</label>
+          <select id="jenis" required>
+            <option value="Pertalite">Pertalite</option>
+            <option value="Pertamax">Pertamax</option>
+            <option value="Solar">Solar Industri</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="kendaraan">Kendaraan:</label>
+          <input type="text" id="kendaraan" required />
+        </div>
+        <button type="submit">Simpan</button>
+      </form>
+    </div>
+
+    <!-- Data Table -->
+    <div class="container hidden" id="dataContainer">
+      <h2>Riwayat Penggunaan BBM</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Pemakaian (L)</th>
+            <th>Jenis</th>
+            <th>Kendaraan</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+      <div class="total" id="totalPemakaian">Total Pemakaian: 0 L</div>
+      <button id="saveButton">Save</button>
+    </div>
+
+    <script>
+      let totalPemakaian = 0;
+
+      document.getElementById("role").addEventListener("change", function () {
+        document
+          .getElementById("passwordField")
+          .classList.toggle("hidden", this.value !== "admin");
+      });
+
+      // Login Form submission
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          let role = document.getElementById("role").value;
+          let name = document.getElementById("name").value.trim();
+          let password = document.getElementById("password").value;
+          if (!name) {
+            alert("Nama tidak boleh kosong!");
+            return;
+          }
+          if (role === "admin" && password !== "admin123") {
+            alert("Kata sandi salah!");
+            return;
+          }
+          localStorage.setItem("userRole", role);
+          localStorage.setItem("userName", name);
+          document.getElementById("loginContainer").classList.add("hidden");
+          if (role === "admin") {
+            document.getElementById("bbmContainer").classList.remove("hidden");
+          }
+          document.getElementById("dataContainer").classList.remove("hidden");
+
+          // Cek peran pengguna dan sembunyikan tombol hapus untuk pengguna biasa
+          if (role === "user") {
+            let deleteButtons = document.querySelectorAll(".delete-btn");
+            deleteButtons.forEach(function (button) {
+              button.style.display = "none"; // Sembunyikan tombol hapus untuk pengguna biasa
+            });
+          }
+        });
+
+      // BBM Form submission
+      document
+        .getElementById("bbmForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          let tanggal = document.getElementById("tanggal").value;
+          let pemakaian = parseFloat(
+            document.getElementById("pemakaian").value
+          );
+          let jenis = document.getElementById("jenis").value;
+          let kendaraan = document.getElementById("kendaraan").value;
+
+          if (!tanggal || !pemakaian || !jenis || !kendaraan) {
+            alert("Semua field harus diisi!");
+            return;
+          }
+
+          // Add data to table
+          let tableBody = document.getElementById("dataBody");
+          let row = tableBody.insertRow();
+          row.innerHTML = `  
+          <td>${tanggal}</td>
+          <td>${pemakaian} L</td>
+          <td>${jenis}</td>
+          <td>${kendaraan}</td>
+          <td><button class="delete-btn" onclick="deleteRow(this)">Hapus</button></td>
+        `;
+
+          // Update total pemakaian
+          totalPemakaian += pemakaian;
+          document.getElementById(
+            "totalPemakaian"
+          ).textContent = `Total Pemakaian: ${totalPemakaian} L`;
+
+          // Clear the form
+          document.getElementById("bbmForm").reset();
+        });
+
+      // Delete row function
+      function deleteRow(button) {
+        let userRole = localStorage.getItem("userRole");
+        if (userRole !== "admin") {
+          alert("Anda tidak memiliki izin untuk menghapus data!");
+          return;
+        }
+
+        let row = button.closest("tr");
+        let pemakaian = parseFloat(row.cells[1].textContent.replace(" L", ""));
+        totalPemakaian -= pemakaian;
+        document.getElementById(
+          "totalPemakaian"
+        ).textContent = `Total Pemakaian: ${totalPemakaian} L`;
+        row.remove();
+      }
+
+      // Save data to localStorage
+      document
+        .getElementById("saveButton")
+        .addEventListener("click", function () {
+          let tableRows = document.querySelectorAll("#dataBody tr");
+          let bbmData = [];
+
+          tableRows.forEach(function (row) {
+            let tanggal = row.cells[0].textContent;
+            let pemakaian = parseFloat(
+              row.cells[1].textContent.replace(" L", "")
+            );
+            let jenis = row.cells[2].textContent;
+            let kendaraan = row.cells[3].textContent;
+
+            bbmData.push({ tanggal, pemakaian, jenis, kendaraan });
+          });
+
+          localStorage.setItem("bbmData", JSON.stringify(bbmData));
+          alert("Data berhasil disimpan!");
+        });
+
+      // Load saved data from localStorage
+      window.addEventListener("load", function () {
+        let savedData = localStorage.getItem("bbmData");
+        if (savedData) {
+          let data = JSON.parse(savedData);
+          let tableBody = document.getElementById("dataBody");
+          data.forEach(function (item) {
+            let row = tableBody.insertRow();
+            row.innerHTML = `
+              <td>${item.tanggal}</td>
+              <td>${item.pemakaian} L</td>
+              <td>${item.jenis}</td>
+              <td>${item.kendaraan}</td>
+              <td><button class="delete-btn" onclick="deleteRow(this)">Hapus</button></td>
+            `;
+          });
+
+          // Update total pemakaian
+          totalPemakaian = data.reduce(function (sum, item) {
+            return sum + item.pemakaian;
+          }, 0);
+          document.getElementById(
+            "totalPemakaian"
+          ).textContent = `Total Pemakaian: ${totalPemakaian} L`;
+        }
+      });
+    </script>
+  </body>
+</html>
